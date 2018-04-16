@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Derpibooru WebM Volume Toggle (Experimental)
+// @name         Derpibooru WebM Volume Toggle
 // @description  Audio toggle for WebM clips
-// @version      1.0.17
+// @version      1.0.19
 // @author       Marker
 // @namespace    https://github.com/marktaiwan/
 // @updateURL    https://openuserjs.org/meta/mark.taiwangmail.com/Derpibooru_WebM_Volume_Toggle.meta.js
@@ -19,9 +19,8 @@
 
 /* ================ Configs ================ */
 
-    const    SERVE_WEBM_THUMB = true;
-    const PAUSE_IN_BACKGROUND = true;
-    const           ICON_SIZE = '3em';
+    const PAUSE_IN_BACKGROUND = false;
+    const           ICON_SIZE = '3.5em';
 
 /* ========================================= */
 
@@ -36,6 +35,9 @@
 #image_target .volume-toggle-button {
     opacity: 0;
     font-size: ${ICON_SIZE};
+}
+#image_target .fa-volume-off {
+    padding-right: 30px;
 }
 .video-container .volume-toggle-button, #image_target:hover .volume-toggle-button {
     opacity: 0.4;
@@ -142,6 +144,10 @@
         if (container.matches('.thumb_tiny')) {
             return;
         }
+        // Don't need it if video controls are enabled
+        if (video.controls) {
+            return;
+        }
         var button = document.createElement('div');
         button.classList.add('volume-toggle-button');
         button.classList.add('fa');
@@ -168,110 +174,26 @@
         });
     }
 
-    function staggeredPlayback(videoList) {
-
-    }
-
     initCSS();
     NodeCreationObserver.onCreation('.image-show video, .image-container video', function (video) {
         ifHasAudio(video).then(createToggleButton);
     });
-    if (SERVE_WEBM_THUMB) {
-        let list = document.querySelectorAll('.js-spoiler-info-overlay:not(.hidden)');
-        for (let ele of list) {
-            var anchor = ele.nextElementSibling;
-            var img = anchor.firstElementChild.firstElementChild;
-            if (ele.innerHTML != 'WebM' || getParent(ele, '#duplicate_reporting') !== null || !img.getAttribute('src').endsWith('.gif')) {
-                continue;
-            }
-            var videoElement = document.createElement('video');
-            // videoElement.setAttribute('autoplay', '');
-            videoElement.setAttribute('loop', '');
-            videoElement.setAttribute('muted', '');
-            videoElement.setAttribute('playsinline', '');
-            videoElement.setAttribute('preload', 'auto');
-
-            var webmSource = document.createElement('source');
-            webmSource.setAttribute('src', img.getAttribute('src').slice(0, -4) + '.webm');
-            webmSource.setAttribute('type', 'video/webm');
-
-            var mp4Source = document.createElement('source');
-            mp4Source.setAttribute('src', img.getAttribute('src').slice(0, -4) + '.mp4');
-            mp4Source.setAttribute('type', 'video/mp4');
-
-            videoElement.appendChild(webmSource);
-            videoElement.appendChild(mp4Source);
-
-            ele.parentElement.classList.add('has-webm-overlay');
-            anchor.removeChild(anchor.querySelector('picture'));
-            anchor.appendChild(videoElement);
-            videoElement.muted = true;
-
-            if (!PAUSE_IN_BACKGROUND || !document.hidden) {
-                if (videoElement.readyState == videoElement.HAVE_ENOUGH_DATA) {
-                    videoElement.play()
-                        .then(() => {
-                            console.log('video first play: already have data');
-                        })
-                        .catch((error) => {
-                            console.log('Caught exception: ', error);
-                        });
-                } else {
-                    videoElement.addEventListener('canplaythrough', (e) => {
-                        if (PAUSE_IN_BACKGROUND && document.hidden) {
-                            return;
-                        }
-                        let video = e.target;
-                        console.log('canplaythrough event triggered');
-                        video.play()
-                            .then(() => {
-                                console.log('video first play: received enough data');
-                            })
-                            .catch((error) => {
-                                console.log('Caught exception: ', error);
-                            });
-                    }, {'once': true});
-                }
-            }
-        }
-    }
     if (PAUSE_IN_BACKGROUND) {
         if (document.hidden) {
             let videosList = document.querySelectorAll('video');
-            for (let video of videosList) {
-                if (!video.paused) {
-                    video.pause();
-                    console.log('video paused: script ran in background');
-                }
-            }
+            for (let video of videosList) video.pause();
         }
         document.addEventListener('visibilitychange', () => {
             let videosList = document.querySelectorAll('video');
             if (document.hidden) {
                 for (let video of videosList) {
-                    if (!video.paused) {
-                        video.pause();
-                        console.log('video paused: page visibility change');
-                    }
+                    video.dataset.paused = video.paused;
+                    video.pause();
                 }
             } else {
                 for (let video of videosList) {
-                    console.log(`Video paused: ${video.paused}, readyState: ${video.readyState}`);
-                    if (video.paused && video.readyState == video.HAVE_ENOUGH_DATA) {
-                        video.play().then(() => {
-                            console.log('video played: already have data');
-                        });
-                    } else {
-                        video.load();
-                        video.addEventListener('canplaythrough', (e) => {
-                            if (document.hidden) {
-                                return;
-                            }
-                            console.log('canplaythrough event triggered');
-                            video.play().then(() => {
-                                console.log('video played: received enough data');
-                            });
-                        }, {'once': true});
+                    if (video.dataset.paused != 'true') {
+                        video.play();
                     }
                 }
             }
