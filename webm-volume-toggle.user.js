@@ -3,10 +3,10 @@
 // @description  Audio toggle for WebM clips
 // @version      1.1.0
 // @author       Marker
-// @license      WTFPL
+// @license      MIT
 // @namespace    https://github.com/marktaiwan/
 // @updateURL    https://openuserjs.org/meta/mark.taiwangmail.com/Derpibooru_WebM_Volume_Toggle.meta.js
-// @homepageURL  https://github.com/marktaiwan/Derpibooru-WebM-Toggle
+// @homepageURL  https://github.com/marktaiwan/Derpibooru-WebM-Toggle 
 // @supportURL   https://github.com/marktaiwan/Derpibooru-WebM-Toggle/issues
 // @match        https://derpibooru.org/*
 // @match        https://trixiebooru.org/*
