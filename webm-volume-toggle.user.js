@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Derpibooru WebM Volume Toggle
 // @description  Audio toggle for WebM clips
-// @version      1.0.19
+// @version      1.1.0
 // @author       Marker
 // @namespace    https://github.com/marktaiwan/
 // @updateURL    https://openuserjs.org/meta/mark.taiwangmail.com/Derpibooru_WebM_Volume_Toggle.meta.js
@@ -12,17 +12,56 @@
 // @grant        none
 // @noframes
 // @require      https://openuserjs.org/src/libs/soufianesakhi/node-creation-observer.js
+// @require      https://raw.githubusercontent.com/marktaiwan/Derpibooru-Unified-Userscript-Ui/master/derpi-four-u.js
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-/* ================ Configs ================ */
+/* ================== User Configurable Settings ================= */
+    // Setting up UI
+    const config = ConfigManager(
+        'WebM Volume Toggle',
+        'volume_toggle',
+        'This script places a button on the top left corner of all WebM videos that contains an audio track.'
+    );
+    config.registerSetting({
+        title: 'Disable video controls',
+        key: 'disable_control',
+        description: 'Disable browser\'s native video controls for the main image page and instead use the toggle button.',
+        type: 'checkbox',
+        defaultValue: false
+    });
+    config.registerSetting({
+        title: 'Enable sound by default',
+        key: 'volume_default_on',
+        type: 'checkbox',
+        defaultValue: false
+    });
+    config.registerSetting({
+        title: 'Pause in background',
+        key: 'background_pause',
+        description: 'Pauses video when the page loses visibility.',
+        type: 'checkbox',
+        defaultValue: false
+    });
+    config.registerSetting({
+        title: 'Icon size (px/em)',
+        key: 'thumb_size',
+        description: 'Size of the main image volume icon. Must include units.',
+        type: 'text',
+        defaultValue: '3.5em'
+    })
+    .querySelector('input')     // additional input styling
+    .setAttribute('size', '6');
 
-    const PAUSE_IN_BACKGROUND = false;
-    const           ICON_SIZE = '3.5em';
+    const     DISABLE_CONTROL = config.getEntry('disable_control');
+    const           VOLUME_ON = config.getEntry('volume_default_on');
+    const PAUSE_IN_BACKGROUND = config.getEntry('background_pause');
+    const           ICON_SIZE = config.getEntry('thumb_size');
 
-/* ========================================= */
+// To change these settings, visit https://derpibooru.org/settings
+/* =============================================================== */
 
     function initCSS() {
         var styleElement = document.createElement('style');
@@ -35,6 +74,7 @@
 #image_target .volume-toggle-button {
     opacity: 0;
     font-size: ${ICON_SIZE};
+    margin-top: 4px;
 }
 #image_target .fa-volume-off {
     padding-right: 30px;
@@ -123,8 +163,8 @@
     }
 
     function toggle(video) {
-        var container = getParent(video, '.video-container');
-        var button = container.querySelector('.volume-toggle-button');
+        const container = getParent(video, '.video-container');
+        const button = container.querySelector('.volume-toggle-button');
         if (container.dataset.isMuted == '1') {
             button.classList.add('fa-volume-up');
             button.classList.remove('fa-volume-off');
@@ -139,12 +179,11 @@
     }
 
     function createToggleButton(video) {
-        var container = getParent(video, '.image-show, .image-container');
+        const container = getParent(video, '.image-show, .image-container');
         // Ignore the really small thumbnails
         if (container.matches('.thumb_tiny')) {
             return;
         }
-        // Don't need it if video controls are enabled
         if (video.controls) {
             return;
         }
@@ -153,6 +192,7 @@
         button.classList.add('fa');
 
         if (container.matches('.video-container')) {
+            // Setting persists after resizing
             if (container.dataset.isMuted != '1') {
                 button.classList.add('fa-volume-up');
                 video.muted = false;
@@ -162,9 +202,13 @@
             }
         } else {
             container.classList.add('video-container');
-            // videos defaults to mute
-            container.dataset.isMuted = '1';
-            button.classList.add('fa-volume-off');
+            if (video.muted) {
+                container.dataset.isMuted = '1';
+                button.classList.add('fa-volume-off');
+            } else {
+                container.dataset.isMuted = '0';
+                button.classList.add('fa-volume-up');
+            }
         }
 
         container.appendChild(button);
@@ -176,6 +220,14 @@
 
     initCSS();
     NodeCreationObserver.onCreation('.image-show video, .image-container video', function (video) {
+        const mainImage = (getParent(video, '#image_target') !== null);
+        if (mainImage) {
+            video.muted = !VOLUME_ON;
+            video.controls = !DISABLE_CONTROL;
+        }
+        if (video.controls) {   // No need to insert buttons if native control is on
+            return;
+        }
         ifHasAudio(video).then(createToggleButton);
     });
     if (PAUSE_IN_BACKGROUND) {
