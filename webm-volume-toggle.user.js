@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         Derpibooru WebM Volume Toggle
 // @description  Audio toggle for WebM clips
-// @version      1.1.1
+// @version      1.2.0
 // @author       Marker
 // @license      MIT
 // @namespace    https://github.com/marktaiwan/
 // @updateURL    https://openuserjs.org/meta/mark.taiwangmail.com/Derpibooru_WebM_Volume_Toggle.meta.js
-// @homepageURL  https://github.com/marktaiwan/Derpibooru-WebM-Toggle 
+// @homepageURL  https://github.com/marktaiwan/Derpibooru-WebM-Toggle
 // @supportURL   https://github.com/marktaiwan/Derpibooru-WebM-Toggle/issues
 // @match        https://derpibooru.org/*
 // @match        https://trixiebooru.org/*
@@ -28,6 +28,13 @@
         'volume_toggle',
         'This script places a button on the top left corner of all WebM videos that contains an audio track.'
     );
+    config.registerSetting({
+        title: 'Always load full resolution',
+        key: 'full_res',
+        description: 'Always display the full resolution WebM file. Does not affect scaling.',
+        type: 'checkbox',
+        defaultValue: false
+    });
     config.registerSetting({
         title: 'Disable video controls',
         key: 'disable_control',
@@ -58,6 +65,7 @@
     .querySelector('input')     // additional input styling
     .setAttribute('size', '6');
 
+    const       LOAD_FULL_RES = config.getEntry('full_res');
     const     DISABLE_CONTROL = config.getEntry('disable_control');
     const           VOLUME_ON = config.getEntry('volume_default_on');
     const PAUSE_IN_BACKGROUND = config.getEntry('background_pause');
@@ -221,10 +229,64 @@
         });
     }
 
+    function scaleVideo(event) {
+        event.stopPropagation();
+        const video = event.target;
+        const imageShow = getParent(video, '.image-show');
+
+        switch (imageShow.getAttribute('data-scaled')) {
+            case 'true':
+                imageShow.setAttribute('data-scaled', 'partscaled');
+                video.classList.remove('image-scaled');
+                video.classList.add('image-partscaled');
+                break;
+            case 'partscaled':
+                imageShow.setAttribute('data-scaled', 'false');
+                video.classList.remove('image-partscaled');
+                break;
+            case 'false':
+                imageShow.setAttribute('data-scaled', 'true');
+                video.classList.add('image-scaled');
+                break;
+        }
+    }
+
     initCSS();
     NodeCreationObserver.onCreation('.image-show video, .image-container video', function (video) {
-        const mainImage = (getParent(video, '#image_target') !== null);
-        if (mainImage) {
+        const isMainImage = (getParent(video, '#image_target') !== null);
+        if (isMainImage) {
+            const imageShow = getParent(video, '.image-show');
+            const fileVersions = JSON.parse(imageShow.dataset.uris);
+
+            if (LOAD_FULL_RES && fileVersions.full.endsWith('.webm')) {
+                let reloadVideo = true;
+                // rewrite 'data-uris' attribute to trick resize event handler
+                for (const prop in fileVersions) {
+                    if (prop === 'webm' || prop === 'mp4' || prop === 'full') continue;
+                    fileVersions[prop] = fileVersions.full;
+                }
+                imageShow.dataset.uris = JSON.stringify(fileVersions);
+
+                // change <source> to point to full resolution file
+                let videoSources = video.querySelectorAll('source');
+                for (const source of videoSources) {
+                    if (source.src.endsWith(fileVersions.full)) {
+                        reloadVideo = false;
+                        break;
+                    }
+                    source.src = fileVersions.full;
+                    if (source.type === 'video/mp4') {
+                        source.src = source.src.replace(/webm$/i, 'mp4');
+                    }
+                }
+
+                // bind our own click resize handler to the video because changing 'data-uris' broke the native one
+                video.addEventListener('click', scaleVideo);
+
+                // reload the video so the new url will take
+                if(reloadVideo) video.load();
+            }
+
             video.muted = !VOLUME_ON;
             video.controls = !DISABLE_CONTROL;
         }
