@@ -125,18 +125,6 @@
         document.head.appendChild(styleElement);
     }
 
-    function checkDecode(video, delay, resolve) {
-        if (video.webkitAudioDecodedByteCount > 0 || video.mozHasAudio) {
-            resolve(video);
-        } else {
-            // 2 seconds wait time
-            if (delay < 2048) {
-                delay *= 2;
-                setTimeout(() => checkDecode(video, delay, resolve), delay);
-            }
-        }
-    }
-
     function createListener(video, resolve) {
         return function () {
             if (video.dataset.listenerAttached !== undefined) {
@@ -144,22 +132,24 @@
             } else {
                 video.dataset.listenerAttached = '1';
             }
-            if (typeof video.webkitAudioDecodedByteCount !== 'undefined' || typeof video.mozHasAudio !== 'undefined') {
-                // wait for video decode
-                var delay = 4;
-                checkDecode(video, delay, resolve);
-            } else {
-                // Only IE, Edge, and Safari supports this, wtf?
-                if (video.audioTracks && video.audioTracks.length) {
-                    resolve(video);
-                }
+
+            /*
+             * Audio track detection method for:
+             *      - Chrome
+             *      - Firefox
+             *      - IE, Edge, and Safari
+             */
+            if (video.webkitAudioDecodedByteCount > 0 ||
+                video.mozHasAudio ||
+                typeof video.audioTracks !== 'undefined' && video.audioTracks.length > 0) {
+                resolve(video);
             }
         };
     }
 
     function ifHasAudio(video) {
-        return new Promise((resolve, reject) => {
-            video.addEventListener('loadeddata', createListener(video, resolve), {'once': true});
+        return new Promise((resolve) => {
+            video.addEventListener('canplay', createListener(video, resolve), {'once': true});
             if (video.readyState >= video.HAVE_CURRENT_DATA) {
                 (createListener(video, resolve))();
             }
