@@ -191,6 +191,7 @@
 
     function createToggleButton(video) {
         const container = getParent(video, '.image-show, .image-container');
+
         // Ignore the really small thumbnails
         if (container.matches('.thumb_tiny')) {
             return;
@@ -198,7 +199,8 @@
         if (video.controls) {
             return;
         }
-        var button = document.createElement('div');
+
+        const button = document.createElement('div');
         button.classList.add('volume-toggle-button');
         button.classList.add('fa');
 
@@ -262,15 +264,15 @@
 
             if (LOAD_FULL_RES && fileVersions.full.endsWith('.webm')) {
                 let reloadVideo = true;
-                // rewrite 'data-uris' attribute to trick resize event handler
                 for (const prop in fileVersions) {
+                    // rewrite 'data-uris' attribute to trick resize event handler
                     if (prop === 'webm' || prop === 'mp4' || prop === 'full') continue;
                     fileVersions[prop] = fileVersions.full;
                 }
                 imageShow.dataset.uris = JSON.stringify(fileVersions);
 
                 // change <source> to point to full resolution file
-                let videoSources = video.querySelectorAll('source');
+                const videoSources = video.querySelectorAll('source');
                 for (const source of videoSources) {
                     if (source.src.endsWith(fileVersions.full)) {
                         reloadVideo = false;
@@ -286,7 +288,7 @@
                 video.addEventListener('click', scaleVideo);
 
                 // reload the video so the new url will take
-                if(reloadVideo) video.load();
+                if (reloadVideo) video.load();
             }
 
             video.muted = !VOLUME_ON;
@@ -310,18 +312,18 @@
     });
     if (PAUSE_IN_BACKGROUND) {
         if (document.hidden) {
-            let videosList = document.querySelectorAll('video');
-            for (let video of videosList) video.pause();
+            const videosList = document.querySelectorAll('video');
+            for (const video of videosList) video.pause();
         }
         document.addEventListener('visibilitychange', () => {
-            let videosList = document.querySelectorAll('video');
+            const videosList = document.querySelectorAll('video');
             if (document.hidden) {
-                for (let video of videosList) {
+                for (const video of videosList) {
                     video.dataset.paused = video.paused;
                     video.pause();
                 }
             } else {
-                for (let video of videosList) {
+                for (const video of videosList) {
                     if (video.dataset.paused != 'true') {
                         video.play();
                     }
