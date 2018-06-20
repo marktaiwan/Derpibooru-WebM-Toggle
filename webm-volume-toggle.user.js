@@ -15,7 +15,7 @@
 // @grant        none
 // @noframes
 // @require      https://openuserjs.org/src/libs/soufianesakhi/node-creation-observer.js
-// @require      https://openuserjs.org/src/libs/mark.taiwangmail.com/Derpibooru_Unified_Userscript_UI_Utility.js?1.0.2
+// @require      https://openuserjs.org/src/libs/mark.taiwangmail.com/Derpibooru_Unified_Userscript_UI_Utility.js
 // ==/UserScript==
 
 (function() {
@@ -227,6 +227,8 @@
             event.stopPropagation();
             toggle(video);
         });
+
+        return video;
     }
 
     function scaleVideo(event) {
@@ -290,10 +292,21 @@
             video.muted = !VOLUME_ON;
             video.controls = !DISABLE_CONTROL;
         }
+
+        const anchor = getParent(video, 'a');
+        if (anchor) anchor.title = 'WebM | ' + anchor.title;
+
         if (video.controls) {   // No need to insert buttons if native control is on
             return;
         }
-        ifHasAudio(video).then(createToggleButton);
+        ifHasAudio(video)
+            .then(createToggleButton)
+            .then(video => video.play())
+            .catch(function () {
+                console.log('Derpibooru WebM Volume Toggle: Unable to play video unmuted, playing it muted instead.');
+                toggle(video);
+                video.play();
+            });
     });
     if (PAUSE_IN_BACKGROUND) {
         if (document.hidden) {
