@@ -180,47 +180,49 @@
     }
 
     function createToggleButton(video) {
-        const container = getParent(video, '.image-show, .image-container');
+        return new Promise((resolve) => {
+            const container = getParent(video, '.image-show, .image-container');
 
-        // Ignore the really small thumbnails
-        if (container.matches('.thumb_tiny')) {
-            return;
-        }
-        if (video.controls) {
-            return;
-        }
-
-        const button = document.createElement('div');
-        button.classList.add('volume-toggle-button');
-        button.classList.add('fa');
-
-        if (container.matches('.video-container')) {
-            // Setting persists after resizing
-            if (container.dataset.isMuted != '1') {
-                button.classList.add('fa-volume-up');
-                video.muted = false;
-            } else {
-                button.classList.add('fa-volume-off');
-                video.muted = true;
+            // Ignore the really small thumbnails
+            if (container.matches('.thumb_tiny')) {
+                return;
             }
-        } else {
-            container.classList.add('video-container');
-            if (video.muted) {
-                container.dataset.isMuted = '1';
-                button.classList.add('fa-volume-off');
-            } else {
-                container.dataset.isMuted = '0';
-                button.classList.add('fa-volume-up');
+            if (video.controls) {
+                return;
             }
-        }
 
-        container.appendChild(button);
-        button.addEventListener('click', function (event) {
-            event.stopPropagation();
-            toggle(video);
+            const button = document.createElement('div');
+            button.classList.add('volume-toggle-button');
+            button.classList.add('fa');
+
+            if (container.matches('.video-container')) {
+                // Setting persists after resizing
+                if (container.dataset.isMuted != '1') {
+                    button.classList.add('fa-volume-up');
+                    video.muted = false;
+                } else {
+                    button.classList.add('fa-volume-off');
+                    video.muted = true;
+                }
+            } else {
+                container.classList.add('video-container');
+                if (video.muted) {
+                    container.dataset.isMuted = '1';
+                    button.classList.add('fa-volume-off');
+                } else {
+                    container.dataset.isMuted = '0';
+                    button.classList.add('fa-volume-up');
+                }
+            }
+
+            container.appendChild(button);
+            button.addEventListener('click', function (event) {
+                event.stopPropagation();
+                toggle(video);
+            });
+
+            resolve(video);
         });
-
-        return video;
     }
 
     function scaleVideo(event) {
@@ -285,21 +287,36 @@
             video.controls = !DISABLE_CONTROL;
         }
 
+        if (PAUSE_IN_BACKGROUND) {
+            video.dataset.paused = '0';
+            video.addEventListener('play', (e) => {
+                if (!document.hidden) e.target.dataset.paused = '0';
+            });
+            video.addEventListener('pause', (e) => {
+                if (!document.hidden) e.target.dataset.paused = '1';
+            });
+        }
+
         const anchor = getParent(video, 'a');
         if (anchor) anchor.title = 'WebM | ' + anchor.title;
 
         if (video.controls) {   // No need to insert buttons if native control is on
             return;
         }
+
         ifHasAudio(video)
             .then(createToggleButton)
-            .then(video => video.play())
+            .then((video) => {
+                if (isMainImage && !document.hidden) return video.play();
+            })
             .catch(function () {
+                // Fallback for Chrome's autoplay policy preventing video from playing
                 console.log('Derpibooru WebM Volume Toggle: Unable to play video unmuted, playing it muted instead.');
                 toggle(video);
                 video.play();
             });
     });
+
     if (PAUSE_IN_BACKGROUND) {
         if (document.hidden) {
             const videosList = document.querySelectorAll('video');
@@ -307,15 +324,16 @@
         }
         document.addEventListener('visibilitychange', () => {
             const videosList = document.querySelectorAll('video');
-            if (document.hidden) {
-                for (const video of videosList) {
-                    video.dataset.paused = video.paused;
+            for (const video of videosList) {
+                if (document.hidden) {
                     video.pause();
-                }
-            } else {
-                for (const video of videosList) {
-                    if (video.dataset.paused != 'true') {
-                        video.play();
+                } else {
+                    if (video.dataset.paused !== '1') {
+                        video.play().catch(() => {
+                            // no-op:
+                            // Prevents console errors when video is paused before
+                            // the play() promise if resolved
+                        });
                     }
                 }
             }
