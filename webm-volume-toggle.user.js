@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Derpibooru WebM Volume Toggle
 // @description  Audio toggle for WebM clips
-// @version      1.2.1
+// @version      1.2.2
 // @author       Marker
 // @license      MIT
 // @namespace    https://github.com/marktaiwan/
