@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Derpibooru WebM Volume Toggle
 // @description  Audio toggle for WebM clips
-// @version      1.2.2
+// @version      1.2.3
 // @author       Marker
 // @license      MIT
 // @namespace    https://github.com/marktaiwan/
-// @updateURL    https://openuserjs.org/meta/mark.taiwangmail.com/Derpibooru_WebM_Volume_Toggle.meta.js
 // @homepageURL  https://github.com/marktaiwan/Derpibooru-WebM-Toggle
 // @supportURL   https://github.com/marktaiwan/Derpibooru-WebM-Toggle/issues
+// @updateURL    https://openuserjs.org/meta/mark.taiwangmail.com/Derpibooru_WebM_Volume_Toggle.meta.js
 // @match        https://derpibooru.org/*
 // @match        https://trixiebooru.org/*
 // @match        https://www.derpibooru.org/*
@@ -31,7 +31,7 @@
     config.registerSetting({
         title: 'Always load full resolution',
         key: 'full_res',
-        description: 'Always display the full resolution WebM file. Does not affect scaling.',
+        description: 'Always display the full resolution WebM file. Does not affect scaling settings.',
         type: 'checkbox',
         defaultValue: false
     });
@@ -43,8 +43,15 @@
         defaultValue: false
     });
     config.registerSetting({
-        title: 'Enable sound by default',
+        title: 'Play sound by default',
         key: 'volume_default_on',
+        type: 'checkbox',
+        defaultValue: false
+    });
+    config.registerSetting({
+        title: 'Auto-mute',
+        key: 'automute',
+        description: 'Automatically mute and unmute videos when they are scrolled in and out of current view.',
         type: 'checkbox',
         defaultValue: false
     });
@@ -70,6 +77,7 @@
     const           VOLUME_ON = config.getEntry('volume_default_on');
     const PAUSE_IN_BACKGROUND = config.getEntry('background_pause');
     const           ICON_SIZE = config.getEntry('thumb_size');
+    const            AUTOMUTE = config.getEntry('automute');
 
 // To change these settings, visit https://derpibooru.org/settings
 /* =============================================================== */
@@ -163,20 +171,8 @@
         return element;
     }
 
-    function toggle(video) {
-        const container = getParent(video, '.video-container');
-        const button = container.querySelector('.volume-toggle-button');
-        if (container.dataset.isMuted == '1') {
-            button.classList.add('fa-volume-up');
-            button.classList.remove('fa-volume-off');
-            video.muted = false;
-            container.dataset.isMuted = '0';
-        } else {
-            button.classList.add('fa-volume-off');
-            button.classList.remove('fa-volume-up');
-            video.muted = true;
-            container.dataset.isMuted = '1';
-        }
+    function toggleVolume(video) {
+        video.muted = !video.muted;
     }
 
     function createToggleButton(video) {
@@ -185,9 +181,7 @@
 
             // Ignore the really small thumbnails
             if (container.matches('.thumb_tiny')) {
-                return;
-            }
-            if (video.controls) {
+                container.dataset.isMuted = '1';
                 return;
             }
 
@@ -215,10 +209,13 @@
                 }
             }
 
+            if (video.controls) {
+                button.classList.add('hidden');
+            }
             container.appendChild(button);
             button.addEventListener('click', function (event) {
                 event.stopPropagation();
-                toggle(video);
+                toggleVolume(video);
             });
 
             resolve(video);
@@ -247,14 +244,40 @@
         }
     }
 
+    function volumechangeHandler(event) {
+        const video = event.target;
+        const container = getParent(video, '.image-show, .image-container');
+        const button = container.querySelector('.volume-toggle-button');
+        const oldValue = container.dataset.isMuted;
+
+        if (!isVisible(video)) return;
+
+        container.dataset.isMuted = video.muted ? '1' : '0';
+        if (container.dataset.isMuted != oldValue && button !== null) {
+            if (container.dataset.isMuted == '0') {
+                button.classList.add('fa-volume-up');
+                button.classList.remove('fa-volume-off');
+            } else {
+                button.classList.add('fa-volume-off');
+                button.classList.remove('fa-volume-up');
+            }
+        }
+    }
+
+    function isVisible(ele) {
+        const {top, bottom} = ele.getBoundingClientRect();
+        return (top > 0 || bottom > 0) && (top < document.documentElement.clientHeight);
+    }
+
     initCSS();
     NodeCreationObserver.onCreation('.image-show video, .image-container video', function (video) {
         const isMainImage = (getParent(video, '#image_target') !== null);
         if (isMainImage) {
             const imageShow = getParent(video, '.image-show');
             const fileVersions = JSON.parse(imageShow.dataset.uris);
+            const isWebM = fileVersions.full.endsWith('.webm');
 
-            if (LOAD_FULL_RES && fileVersions.full.endsWith('.webm')) {
+            if (LOAD_FULL_RES && isWebM) {
                 let reloadVideo = true;
                 for (const prop in fileVersions) {
                     // rewrite 'data-uris' attribute to trick resize event handler
@@ -283,7 +306,7 @@
                 if (reloadVideo) video.load();
             }
 
-            video.muted = !VOLUME_ON;
+            if (isWebM) video.muted = !VOLUME_ON || (AUTOMUTE && !isVisible(video));
             video.controls = !DISABLE_CONTROL;
         }
 
@@ -300,19 +323,16 @@
         const anchor = getParent(video, 'a');
         if (anchor) anchor.title = 'WebM | ' + anchor.title;
 
-        if (video.controls) {   // No need to insert buttons if native control is on
-            return;
-        }
-
         ifHasAudio(video)
             .then(createToggleButton)
             .then((video) => {
+                video.addEventListener('volumechange', volumechangeHandler);
                 if (isMainImage && !document.hidden) return video.play();
             })
             .catch(function () {
                 // Fallback for Chrome's autoplay policy preventing video from playing
                 console.log('Derpibooru WebM Volume Toggle: Unable to play video unmuted, playing it muted instead.');
-                toggle(video);
+                toggleVolume(video);
                 video.play();
             });
     });
@@ -336,6 +356,31 @@
                         });
                     }
                 }
+            }
+        });
+    }
+
+    if (AUTOMUTE) {
+        const interval = 100; // milliseconds
+        let lastExecution = Date.now();
+        document.addEventListener('scroll', () => {
+            if (Date.now() - lastExecution > interval) {
+                window.setTimeout(() => {
+                    const videoElements = document.querySelectorAll('[data-is-muted] video');
+                    for (const video of videoElements) {
+                        const container = getParent(video, '[data-is-muted]');
+                        if (isVisible(video)) {
+                            if (container.dataset.automuted != '1') continue;
+                            container.dataset.automuted = '0';
+                            video.muted = (container.dataset.isMuted == '1');
+                        } else {
+                            if (container.automuted == '1') continue;
+                            container.dataset.automuted = '1';
+                            video.muted = true;
+                        }
+                    }
+                }, interval);
+                lastExecution = Date.now();
             }
         });
     }
