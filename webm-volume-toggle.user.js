@@ -1,17 +1,15 @@
 // ==UserScript==
 // @name         Derpibooru WebM Volume Toggle
 // @description  Audio toggle for WebM clips
-// @version      1.2.3
+// @version      1.3.0
 // @author       Marker
 // @license      MIT
 // @namespace    https://github.com/marktaiwan/
 // @homepageURL  https://github.com/marktaiwan/Derpibooru-WebM-Toggle
 // @supportURL   https://github.com/marktaiwan/Derpibooru-WebM-Toggle/issues
 // @updateURL    https://openuserjs.org/meta/mark.taiwangmail.com/Derpibooru_WebM_Volume_Toggle.meta.js
-// @match        https://derpibooru.org/*
-// @match        https://trixiebooru.org/*
-// @match        https://www.derpibooru.org/*
-// @match        https://www.trixiebooru.org/*
+// @include      https://*derpibooru.org/*
+// @include      https://*trixiebooru.org/*
 // @grant        none
 // @noframes
 // @require      https://openuserjs.org/src/libs/soufianesakhi/node-creation-observer.js
