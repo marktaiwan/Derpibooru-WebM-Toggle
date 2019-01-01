@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Derpibooru WebM Volume Toggle
 // @description  Audio toggle for WebM clips
-// @version      1.3.0
+// @version      1.3.1
 // @author       Marker
 // @license      MIT
 // @namespace    https://github.com/marktaiwan/
@@ -133,6 +133,7 @@
 
     function createListener(video, resolve) {
         return function () {
+            let audio = false;
             if (video.dataset.listenerAttached !== undefined) {
                 return;
             } else {
@@ -148,8 +149,9 @@
             if (video.webkitAudioDecodedByteCount > 0 ||
                 video.mozHasAudio ||
                 typeof video.audioTracks !== 'undefined' && video.audioTracks.length > 0) {
-                resolve(video);
+                audio = true;
             }
+            resolve({video, audio});
         };
     }
 
@@ -173,50 +175,51 @@
         video.muted = !video.muted;
     }
 
-    function createToggleButton(video) {
+    function createToggleButton(obj) {
         return new Promise((resolve) => {
-            const container = getParent(video, '.image-show, .image-container');
-
-            // Ignore the really small thumbnails
-            if (container.matches('.thumb_tiny')) {
-                container.dataset.isMuted = '1';
-                return;
-            }
-
-            const button = document.createElement('div');
-            button.classList.add('volume-toggle-button');
-            button.classList.add('fa');
-
-            if (container.matches('.video-container')) {
-                // Setting persists after resizing
-                if (container.dataset.isMuted != '1') {
-                    button.classList.add('fa-volume-up');
-                    video.muted = false;
-                } else {
-                    button.classList.add('fa-volume-off');
-                    video.muted = true;
-                }
-            } else {
-                container.classList.add('video-container');
-                if (video.muted) {
+            const {video, audio} = obj;
+            if (audio) {
+                const container = getParent(video, '.image-show, .image-container');
+                // Ignore the really small thumbnails
+                if (container.matches('.thumb_tiny')) {
                     container.dataset.isMuted = '1';
-                    button.classList.add('fa-volume-off');
-                } else {
-                    container.dataset.isMuted = '0';
-                    button.classList.add('fa-volume-up');
+                    return;
                 }
-            }
 
-            if (video.controls) {
-                button.classList.add('hidden');
-            }
-            container.appendChild(button);
-            button.addEventListener('click', function (event) {
-                event.stopPropagation();
-                toggleVolume(video);
-            });
+                const button = document.createElement('div');
+                button.classList.add('volume-toggle-button');
+                button.classList.add('fa');
 
-            resolve(video);
+                if (container.matches('.video-container')) {
+                    // Setting persists after resizing
+                    if (container.dataset.isMuted != '1') {
+                        button.classList.add('fa-volume-up');
+                        video.muted = false;
+                    } else {
+                        button.classList.add('fa-volume-off');
+                        video.muted = true;
+                    }
+                } else {
+                    container.classList.add('video-container');
+                    if (video.muted) {
+                        container.dataset.isMuted = '1';
+                        button.classList.add('fa-volume-off');
+                    } else {
+                        container.dataset.isMuted = '0';
+                        button.classList.add('fa-volume-up');
+                    }
+                }
+
+                if (video.controls) {
+                    button.classList.add('hidden');
+                }
+                container.appendChild(button);
+                button.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                    toggleVolume(video);
+                });
+            }
+            resolve(obj);
         });
     }
 
@@ -323,9 +326,10 @@
 
         ifHasAudio(video)
             .then(createToggleButton)
-            .then((video) => {
-                video.addEventListener('volumechange', volumechangeHandler);
-                if (isMainImage && !document.hidden) return video.play();
+            .then((obj) => {
+                const {video, audio} = obj;
+                if (audio) video.addEventListener('volumechange', volumechangeHandler);
+                if ((isMainImage && !document.hidden) || video.paused && !document.hidden) return video.play();
             })
             .catch(function () {
                 // Fallback for Chrome's autoplay policy preventing video from playing
