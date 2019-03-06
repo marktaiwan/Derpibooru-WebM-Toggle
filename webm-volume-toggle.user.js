@@ -124,51 +124,42 @@
 .volume-toggle-button.fa-volume-up {
     padding-right: 0px;
 }
-.image-container.has-webm-overlay .volume-toggle-button {
-    top: 20px;
-}
 `;
         document.head.appendChild(styleElement);
     }
 
-    function createListener(video, resolve) {
-        return function () {
-            let audio = false;
-            if (video.dataset.listenerAttached !== undefined) {
-                return;
-            } else {
-                video.dataset.listenerAttached = '1';
-            }
+    function checkAudioTrack(video) {
 
-            /*
-             * Audio track detection method for:
-             *      - Chrome
-             *      - Firefox
-             *      - IE, Edge, and Safari
-             */
-            if (video.webkitAudioDecodedByteCount > 0 ||
-                video.mozHasAudio ||
-                typeof video.audioTracks !== 'undefined' && video.audioTracks.length > 0) {
-                audio = true;
-            }
-            resolve({video, audio});
-        };
-    }
+        function createListener(video, resolve) {
+            return function () {
+                let audio = false;
+                if (video.dataset.listenerAttached !== undefined) {
+                    return;
+                } else {
+                    video.dataset.listenerAttached = '1';
+                }
 
-    function ifHasAudio(video) {
+                /*
+                 * Audio track detection method for:
+                 *      - Chrome
+                 *      - Firefox
+                 *      - IE, Edge, and Safari
+                 */
+                if (video.webkitAudioDecodedByteCount > 0 ||
+                    video.mozHasAudio ||
+                    typeof video.audioTracks !== 'undefined' && video.audioTracks.length > 0) {
+                    audio = true;
+                }
+                resolve({video, audio});
+            };
+        }
+
         return new Promise((resolve) => {
             video.addEventListener('canplay', createListener(video, resolve), {'once': true});
             if (video.readyState >= video.HAVE_CURRENT_DATA) {
                 (createListener(video, resolve))();
             }
         });
-    }
-
-    function getParent(element, selector) {
-        do {
-            element = element.parentElement;
-        } while (element !== null && !element.matches(selector));
-        return element;
     }
 
     function toggleVolume(video) {
@@ -179,7 +170,7 @@
         return new Promise((resolve) => {
             const {video, audio} = obj;
             if (audio) {
-                const container = getParent(video, '.image-show, .image-container');
+                const container = video.closest('.image-show, .image-container');
                 // Ignore the really small thumbnails
                 if (container.matches('.thumb_tiny')) {
                     container.dataset.isMuted = '1';
@@ -226,7 +217,7 @@
     function scaleVideo(event) {
         event.stopPropagation();
         const video = event.target;
-        const imageShow = getParent(video, '.image-show');
+        const imageShow = video.closest('.image-show');
 
         switch (imageShow.getAttribute('data-scaled')) {
             case 'true':
@@ -247,7 +238,7 @@
 
     function volumechangeHandler(event) {
         const video = event.target;
-        const container = getParent(video, '.image-show, .image-container');
+        const container = video.closest('.image-show, .image-container');
         const button = container.querySelector('.volume-toggle-button');
         const oldValue = container.dataset.isMuted;
 
@@ -275,7 +266,7 @@
     const io = new IntersectionObserver(entries => {
         entries.forEach(entry => {
             const video = entry.target;
-            const container = video.closest('[data-is-muted] video');
+            const container = video.closest('[data-is-muted]');
 
             if (!container) return;
 
@@ -292,9 +283,9 @@
     });
 
     NodeCreationObserver.onCreation('.image-show video, .image-container video', function (video) {
-        const isMainImage = (getParent(video, '#image_target') !== null);
+        const isMainImage = (video.closest('#image_target') !== null);
         if (isMainImage) {
-            const imageShow = getParent(video, '.image-show');
+            const imageShow = video.closest('.image-show');
             const fileVersions = JSON.parse(imageShow.dataset.uris);
             const isWebM = fileVersions.full.endsWith('.webm');
 
@@ -341,10 +332,10 @@
             });
         }
 
-        const anchor = getParent(video, 'a');
+        const anchor = video.closest('a');
         if (anchor) anchor.title = 'WebM | ' + anchor.title;
 
-        ifHasAudio(video)
+        checkAudioTrack(video)
             .then(createToggleButton)
             .then((obj) => {
                 const {video, audio} = obj;
@@ -352,14 +343,16 @@
                     video.addEventListener('volumechange', volumechangeHandler);
                     if (AUTOMUTE) io.observe(video);
                 }
-                if ((isMainImage && !document.hidden) || video.paused && !document.hidden) return video.play();
-            })
-            .catch(function () {
-                // Fallback for Chrome's autoplay policy preventing video from playing
-                console.log('Derpibooru WebM Volume Toggle: Unable to play video unmuted, playing it muted instead.');
-                toggleVolume(video);
-                video.play();
+                if ((isMainImage && !document.hidden) || video.paused && !document.hidden) {
+                    video.play().catch(function () {
+                        // Fallback for Chrome's autoplay policy preventing video from playing
+                        console.log('Derpibooru WebM Volume Toggle: Unable to play video unmuted, playing it muted instead.');
+                        toggleVolume(video);
+                        video.play();
+                    });
+                }
             });
+
     });
 
     if (PAUSE_IN_BACKGROUND) {
@@ -384,7 +377,5 @@
             }
         });
     }
-
-
 
 })();
