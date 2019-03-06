@@ -323,12 +323,17 @@
         }
 
         if (PAUSE_IN_BACKGROUND) {
+            // requestAnimationFrame is workaround for more Chrome weirdness
             video.dataset.paused = '0';
             video.addEventListener('play', (e) => {
-                if (!document.hidden) e.target.dataset.paused = '0';
+                window.requestAnimationFrame(() => {
+                  if (!document.hidden) e.target.dataset.paused = '0';
+                });
             });
             video.addEventListener('pause', (e) => {
-                if (!document.hidden) e.target.dataset.paused = '1';
+                window.requestAnimationFrame(() => {
+                  if (!document.hidden) e.target.dataset.paused = '1';
+                });
             });
         }
 
@@ -342,6 +347,10 @@
                 if (audio) {
                     video.addEventListener('volumechange', volumechangeHandler);
                     if (AUTOMUTE) io.observe(video);
+                } else {
+                    // Attempting to run play() on a video without an audio track will still throw exception on Chrome
+                    // due to its autoplay policy, if the 'muted' property was set to false.
+                    video.muted = true;
                 }
                 if ((isMainImage && !document.hidden) || video.paused && !document.hidden) {
                     video.play().catch(function () {
