@@ -271,6 +271,26 @@
     }
 
     initCSS();
+
+    const io = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            const video = entry.target;
+            const container = video.closest('[data-is-muted] video');
+
+            if (!container) return;
+
+            if (entry.isIntersecting) {
+                if (container.dataset.automuted != '1') return;
+                container.dataset.automuted = '0';
+                video.muted = (container.dataset.isMuted == '1');
+            } else {
+                if (container.dataset.automuted == '1') return;
+                container.dataset.automuted = '1';
+                video.muted = true;
+            }
+        });
+    });
+
     NodeCreationObserver.onCreation('.image-show video, .image-container video', function (video) {
         const isMainImage = (getParent(video, '#image_target') !== null);
         if (isMainImage) {
@@ -328,7 +348,10 @@
             .then(createToggleButton)
             .then((obj) => {
                 const {video, audio} = obj;
-                if (audio) video.addEventListener('volumechange', volumechangeHandler);
+                if (audio) {
+                    video.addEventListener('volumechange', volumechangeHandler);
+                    if (AUTOMUTE) io.observe(video);
+                }
                 if ((isMainImage && !document.hidden) || video.paused && !document.hidden) return video.play();
             })
             .catch(function () {
@@ -362,28 +385,6 @@
         });
     }
 
-    if (AUTOMUTE) {
-        const interval = 100; // milliseconds
-        let lastExecution = Date.now();
-        document.addEventListener('scroll', () => {
-            if (Date.now() - lastExecution > interval) {
-                window.setTimeout(() => {
-                    const videoElements = document.querySelectorAll('[data-is-muted] video');
-                    for (const video of videoElements) {
-                        const container = getParent(video, '[data-is-muted]');
-                        if (isVisible(video)) {
-                            if (container.dataset.automuted != '1') continue;
-                            container.dataset.automuted = '0';
-                            video.muted = (container.dataset.isMuted == '1');
-                        } else {
-                            if (container.automuted == '1') continue;
-                            container.dataset.automuted = '1';
-                            video.muted = true;
-                        }
-                    }
-                }, interval);
-                lastExecution = Date.now();
-            }
-        });
-    }
+
+
 })();
