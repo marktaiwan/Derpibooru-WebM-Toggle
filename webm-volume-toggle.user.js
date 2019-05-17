@@ -329,12 +329,12 @@
             video.dataset.paused = '0';
             video.addEventListener('play', (e) => {
                 window.requestAnimationFrame(() => {
-                  if (!document.hidden) e.target.dataset.paused = '0';
+                    if (!document.hidden) e.target.dataset.paused = '0';
                 });
             });
             video.addEventListener('pause', (e) => {
                 window.requestAnimationFrame(() => {
-                  if (!document.hidden) e.target.dataset.paused = '1';
+                    if (!document.hidden) e.target.dataset.paused = '1';
                 });
             });
         }
