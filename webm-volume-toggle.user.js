@@ -8,15 +8,17 @@
 // @homepageURL  https://github.com/marktaiwan/Derpibooru-WebM-Toggle
 // @supportURL   https://github.com/marktaiwan/Derpibooru-WebM-Toggle/issues
 // @updateURL    https://openuserjs.org/meta/mark.taiwangmail.com/Derpibooru_WebM_Volume_Toggle.meta.js
-// @include      https://*derpibooru.org/*
-// @include      https://*trixiebooru.org/*
-// @grant        none
+// @include      https://derpibooru.org/*
+// @include      https://trixiebooru.org/*
+// @include      https://www.derpibooru.org/*
+// @include      https://www.trixiebooru.org/*
+// @grant        GM_addStyle
 // @noframes
 // @require      https://openuserjs.org/src/libs/soufianesakhi/node-creation-observer.js
 // @require      https://openuserjs.org/src/libs/mark.taiwangmail.com/Derpibooru_Unified_Userscript_UI_Utility.js
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
 /* ================== User Configurable Settings ================= */
@@ -125,8 +127,7 @@
 .volume-toggle-button.fa-volume-up {
     padding-right: 0px;
 }
-`;
-        document.head.appendChild(styleElement);
+`);
     }
 
     function checkAudioTrack(video) {
