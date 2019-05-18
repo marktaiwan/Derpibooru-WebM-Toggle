@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Derpibooru WebM Volume Toggle
 // @description  Audio toggle for WebM clips
-// @version      1.3.3
+// @version      1.3.4
 // @author       Marker
 // @license      MIT
 // @namespace    https://github.com/marktaiwan/
@@ -13,6 +13,7 @@
 // @include      https://www.derpibooru.org/*
 // @include      https://www.trixiebooru.org/*
 // @grant        GM_addStyle
+// @inject-into  content
 // @noframes
 // @require      https://openuserjs.org/src/libs/soufianesakhi/node-creation-observer.js
 // @require      https://openuserjs.org/src/libs/mark.taiwangmail.com/Derpibooru_Unified_Userscript_UI_Utility.js
