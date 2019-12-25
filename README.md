@@ -12,6 +12,6 @@
  [Screenshot](https://imgur.com/yNxiGj6)
 
 #### Installation
-Requires [Violentmonkey](https://violentmonkey.github.io/)
-[Download from Github](https://github.com/marktaiwan/Derpibooru-WebM-Toggle/raw/master/webm-volume-toggle.user.js)
-[Download from OpenUserJS](https://openuserjs.org/scripts/mark.taiwangmail.com/Derpibooru_WebM_Volume_Toggle)
+Requires [Violentmonkey](https://violentmonkey.github.io/)  
+[Download from Github](https://github.com/marktaiwan/Derpibooru-WebM-Toggle/raw/master/webm-volume-toggle.user.js)  
+[Download from OpenUserJS](https://openuserjs.org/scripts/mark.taiwangmail.com/Derpibooru_WebM_Volume_Toggle)  
