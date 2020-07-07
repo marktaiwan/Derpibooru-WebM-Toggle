@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ponybooru WebM Enhancements
 // @description  Audio toggle for WebM clips
-// @version      1.4.2
+// @version      1.4.3
 // @author       Marker
 // @license      MIT
 // @namespace    https://github.com/marktaiwan/
