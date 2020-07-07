@@ -295,9 +295,9 @@
         if (isMainImage) {
             const imageShow = video.closest('.image-show');
             const fileVersions = JSON.parse(imageShow.dataset.uris);
-            const isWebM = fileVersions.full.endsWith('.webm');
+            const isVideo = fileVersions.full.endsWith('.webm') || fileVersions.full.endsWith('.mp4');
 
-            if (LOAD_FULL_RES && isWebM) {
+            if (LOAD_FULL_RES && isVideo) {
                 let reloadVideo = true;
                 for (const prop in fileVersions) {
                     // rewrite 'data-uris' attribute to trick resize event handler
@@ -326,7 +326,7 @@
                 if (reloadVideo) video.load();
             }
 
-            if (isWebM) video.muted = !VOLUME_ON || (AUTOMUTE && !isVisible(video));
+            if (isVideo) video.muted = !VOLUME_ON || (AUTOMUTE && !isVisible(video));
             video.controls = !DISABLE_CONTROL;
         }
 
