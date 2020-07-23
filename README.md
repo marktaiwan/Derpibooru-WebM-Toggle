@@ -1,4 +1,4 @@
-# Derpibooru-WebM-Toggle
+# Twibooru-WebM-Enhancements
 
 ## [Thread on Derpibooru](https://derpibooru.org/forums/meta/topics/userscript-derpibooru-webm-volume-toggle-106)
 
@@ -12,12 +12,11 @@
 
 #### Installation
 Requires [Violentmonkey](https://violentmonkey.github.io/)  
-[Download from Github](https://github.com/marktaiwan/Derpibooru-WebM-Toggle/raw/master/webm-volume-toggle.user.js)  
-[Download from OpenUserJS](https://openuserjs.org/scripts/mark.taiwangmail.com/Derpibooru_WebM_Volume_Toggle)  
+[Download from Github](https://github.com/marktaiwan/Derpibooru-WebM-Toggle/raw/twibooru/webm-enhancements.user.js)  
 
 
 #### Screenshots
 
-![settings](https://raw.githubusercontent.com/marktaiwan/Derpibooru-WebM-Toggle/master/screenshots/settings.png)
+![settings](https://raw.githubusercontent.com/marktaiwan/Derpibooru-WebM-Toggle/twibooru/screenshots/settings.png)
 
-![ui](https://raw.githubusercontent.com/marktaiwan/Derpibooru-WebM-Toggle/master/screenshots/toggle_button.png)
+![ui](https://raw.githubusercontent.com/marktaiwan/Derpibooru-WebM-Toggle/twibooru/screenshots/toggle_button.png)
