@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twibooru WebM Enhancements
 // @description  Audio toggle for WebM clips
-// @version      1.4.2
+// @version      1.4.3
 // @author       Marker
 // @license      MIT
 // @namespace    https://github.com/marktaiwan/
@@ -345,8 +345,9 @@
             });
         }
 
+        video.title = 'WebM | ' + video.title;
         const anchor = video.closest('a');
-        if (anchor) anchor.title = 'WebM | ' + anchor.title;
+        if (anchor) anchor.title = video.title;
 
         checkAudioTrack(video)
             .then(createToggleButton)
