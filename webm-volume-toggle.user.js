@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Derpibooru WebM Volume Toggle
 // @description  Audio toggle for WebM clips
-// @version      1.4.2
+// @version      1.4.4
 // @author       Marker
 // @license      MIT
 // @namespace    https://github.com/marktaiwan/
@@ -318,6 +318,11 @@
                     if (source.type === 'video/mp4') {
                         source.src = source.src.replace(/webm$/i, 'mp4');
                     }
+                }
+
+                // apply image scaling class
+                if (imageShow.dataset.scaled == 'true') {
+                    video.classList.add('image-scaled');
                 }
 
                 // bind our own click resize handler to the video because changing 'data-uris' broke the native one
