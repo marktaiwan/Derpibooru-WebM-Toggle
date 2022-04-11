@@ -225,8 +225,8 @@
 
     function scaleVideo(event) {
         event.stopPropagation();
-        const video = event.target;
-        const imageShow = video.closest('.image-show');
+        const video = document.querySelector('#image_target video');
+        const imageShow = document.querySelector('#image_target');
 
         switch (imageShow.getAttribute('data-scaled')) {
             case 'true':
@@ -326,7 +326,7 @@
                 }
 
                 // bind our own click resize handler to the video because changing 'data-uris' broke the native one
-                video.addEventListener('click', scaleVideo);
+                imageShow.addEventListener('click', scaleVideo, {capture: true});
 
                 // reload the video so the new url will take
                 if (reloadVideo) video.load();
