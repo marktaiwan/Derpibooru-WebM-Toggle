@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Twibooru WebM Enhancements
 // @description  Audio toggle for WebM clips
-// @version      1.4.5
+// @version      1.4.6
 // @author       Marker
 // @license      MIT
 // @namespace    https://github.com/marktaiwan/
