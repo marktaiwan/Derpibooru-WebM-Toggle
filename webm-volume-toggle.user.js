@@ -90,18 +90,18 @@
 .video-container {
     position: relative;
 }
-#image_target .volume-toggle-button {
+.image-target .volume-toggle-button {
     opacity: 0;
     font-size: ${ICON_SIZE};
     margin-top: 4px;
 }
-#image_target .fa-volume-off {
+.image-target .fa-volume-off {
     padding-right: 30px;
 }
-.video-container .volume-toggle-button, #image_target:hover .volume-toggle-button {
+.video-container .volume-toggle-button, .image-target:hover .volume-toggle-button {
     opacity: 0.4;
 }
-.video-container .volume-toggle-button:hover, #image_target .volume-toggle-button:hover {
+.video-container .volume-toggle-button:hover, .image-target .volume-toggle-button:hover {
     opacity: 0.8;
 }
 .volume-toggle-button {
@@ -293,7 +293,7 @@
     });
 
     NodeCreationObserver.onCreation('.image-show video, .image-container video', function (video) {
-        const isMainImage = (video.closest('#image_target') !== null);
+        const isMainImage = (video.closest('.image-target') !== null);
         if (isMainImage) {
             const imageShow = video.closest('.image-show');
             const fileVersions = JSON.parse(imageShow.dataset.uris);
