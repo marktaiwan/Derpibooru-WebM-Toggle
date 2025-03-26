@@ -16,6 +16,7 @@
 // @require      https://openuserjs.org/src/libs/mark.taiwangmail.com/Derpibooru_Unified_Userscript_UI_Utility.js?v1.2.2
 // ==/UserScript==
 
+/* global NodeCreationObserver, ConfigManager */
 (function () {
   'use strict';
 
@@ -70,16 +71,16 @@
     .querySelector('input')     // additional input styling
     .setAttribute('size', '6');
 
-  /* eslint-disable no-multi-spaces */
+  /* eslint-disable @stylistic/no-multi-spaces */
 
-  const LOAD_FULL_RES = config.getEntry('full_res');
-  const DISABLE_CONTROL = config.getEntry('disable_control');
-  const VOLUME_ON = config.getEntry('volume_default_on');
+  const       LOAD_FULL_RES = config.getEntry('full_res');
+  const     DISABLE_CONTROL = config.getEntry('disable_control');
+  const           VOLUME_ON = config.getEntry('volume_default_on');
   const PAUSE_IN_BACKGROUND = config.getEntry('background_pause');
-  const ICON_SIZE = config.getEntry('thumb_size');
-  const AUTOMUTE = config.getEntry('automute');
+  const           ICON_SIZE = config.getEntry('thumb_size');
+  const            AUTOMUTE = config.getEntry('automute');
 
-  /* eslint-enable no-multi-spaces */
+  /* eslint-enable @stylistic/no-multi-spaces */
 
   // To change these settings, visit https://derpibooru.org/settings
   /* =============================================================== */
@@ -155,9 +156,11 @@
          *      - Firefox
          *      - IE, Edge, and Safari
          */
-        if (video.webkitAudioDecodedByteCount > 0 ||
+        if (
+          video.webkitAudioDecodedByteCount > 0 ||
           video.mozHasAudio ||
-          typeof video.audioTracks !== 'undefined' && video.audioTracks.length > 0) {
+          typeof video.audioTracks !== 'undefined' && video.audioTracks.length > 0
+        ) {
           audio = true;
         }
         resolve({video, audio});
