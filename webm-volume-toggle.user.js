@@ -315,6 +315,9 @@
 
       if (isWebM) video.muted = !VOLUME_ON || (AUTOMUTE && !isVisible(video));
       video.controls = !DISABLE_CONTROL;
+    } else {
+      // prevents the cast button from appearing on the thumbnails
+      video.disableRemotePlayback = true;
     }
 
     if (PAUSE_IN_BACKGROUND) {
