@@ -82,7 +82,7 @@
 
   /* eslint-enable @stylistic/no-multi-spaces */
 
-  // To change these settings, visit https://derpibooru.org/settings
+  // To change these settings, visit https://derpibooru.org/settings/edit?active_tab=userscript
   /* =============================================================== */
 
   NodeCreationObserver.init('webm-enhancements-observer');
