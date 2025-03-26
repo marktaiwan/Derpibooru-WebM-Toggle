@@ -91,7 +91,7 @@
 .video-container {
   position: relative;
 }
-.image-target .volume-toggle-button {
+.video-container.image-target .volume-toggle-button {
   opacity: 0;
   font-size: ${ICON_SIZE};
   margin-top: 4px;
