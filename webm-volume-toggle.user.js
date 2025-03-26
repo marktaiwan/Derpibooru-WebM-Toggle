@@ -139,38 +139,25 @@
     }
   }
 
-  function checkAudioTrack(video) {
-
-    function createListener(video, resolve) {
-      return function () {
-        let audio = false;
-        if (video.dataset.listenerAttached !== undefined) {
-          return;
-        } else {
-          video.dataset.listenerAttached = '1';
-        }
-
+  function hasAudio(video) {
+    return new Promise(resolve => {
+      function listener() {
         /*
          * Audio track detection method for:
          *      - Chrome
          *      - Firefox
          *      - IE, Edge, and Safari
          */
-        if (
+        resolve(
           video.webkitAudioDecodedByteCount > 0 ||
           video.mozHasAudio ||
-          typeof video.audioTracks !== 'undefined' && video.audioTracks.length > 0
-        ) {
-          audio = true;
-        }
-        resolve({video, audio});
-      };
-    }
+          video.audioTracks?.length > 0);
+      }
 
-    return new Promise((resolve) => {
-      video.addEventListener('canplay', createListener(video, resolve), {'once': true});
       if (video.readyState >= video.HAVE_CURRENT_DATA) {
-        (createListener(video, resolve))();
+        listener();
+      } else {
+        video.addEventListener('canplay', listener, {once: true});
       }
     });
   }
@@ -179,51 +166,46 @@
     video.muted = !video.muted;
   }
 
-  function createToggleButton(obj) {
-    return new Promise((resolve) => {
-      const {video, audio} = obj;
-      if (audio) {
-        const container = video.closest('.image-show, .image-container');
-        // Ignore the really small thumbnails
-        if (container.matches('.thumb_tiny')) {
-          container.dataset.isMuted = '1';
-          return;
-        }
+  function createToggleButton(video) {
+    const container = video.closest('.image-show, .image-container');
 
-        const button = document.createElement('div');
-        button.classList.add('volume-toggle-button');
-        button.classList.add('fa');
+    // Ignore the really small thumbnails
+    if (container.matches('.thumb_tiny')) {
+      container.dataset.isMuted = '1';
+      return;
+    }
 
-        if (container.matches('.video-container')) {
-          // Setting persists after resizing
-          if (container.dataset.isMuted != '1') {
-            button.classList.add('fa-volume-up');
-            video.muted = false;
-          } else {
-            button.classList.add('fa-volume-off');
-            video.muted = true;
-          }
-        } else {
-          container.classList.add('video-container');
-          if (video.muted) {
-            container.dataset.isMuted = '1';
-            button.classList.add('fa-volume-off');
-          } else {
-            container.dataset.isMuted = '0';
-            button.classList.add('fa-volume-up');
-          }
-        }
+    const button = document.createElement('div');
+    button.classList.add('volume-toggle-button');
+    button.classList.add('fa');
 
-        if (video.controls) {
-          button.classList.add('hidden');
-        }
-        container.appendChild(button);
-        button.addEventListener('click', function (event) {
-          event.stopPropagation();
-          toggleVolume(video);
-        });
+    if (container.matches('.video-container')) {
+      // Setting persists after resizing
+      if (container.dataset.isMuted != '1') {
+        button.classList.add('fa-volume-up');
+        video.muted = false;
+      } else {
+        button.classList.add('fa-volume-off');
+        video.muted = true;
       }
-      resolve(obj);
+    } else {
+      container.classList.add('video-container');
+      if (video.muted) {
+        container.dataset.isMuted = '1';
+        button.classList.add('fa-volume-off');
+      } else {
+        container.dataset.isMuted = '0';
+        button.classList.add('fa-volume-up');
+      }
+    }
+
+    if (video.controls) {
+      button.classList.add('hidden');
+    }
+    container.appendChild(button);
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      toggleVolume(video);
     });
   }
 
@@ -259,13 +241,8 @@
 
     container.dataset.isMuted = video.muted ? '1' : '0';
     if (container.dataset.isMuted != oldValue && button !== null) {
-      if (container.dataset.isMuted == '0') {
-        button.classList.add('fa-volume-up');
-        button.classList.remove('fa-volume-off');
-      } else {
-        button.classList.add('fa-volume-off');
-        button.classList.remove('fa-volume-up');
-      }
+      button.classList.toggle('fa-volume-up', container.dataset.isMuted === '0');
+      button.classList.toggle('fa-volume-off', container.dataset.isMuted !== '0');
     }
   }
 
@@ -295,7 +272,7 @@
     });
   });
 
-  NodeCreationObserver.onCreation('.image-show video, .image-container video', function (video) {
+  NodeCreationObserver.onCreation('.image-show video, .image-container video', async video => {
     const isMainImage = (video.closest('.image-target') !== null);
     if (isMainImage) {
       const imageShow = video.closest('.image-show');
@@ -343,12 +320,12 @@
     if (PAUSE_IN_BACKGROUND) {
       // requestAnimationFrame is workaround for more Chrome weirdness
       video.dataset.paused = '0';
-      video.addEventListener('play', (e) => {
+      video.addEventListener('play', e => {
         window.requestAnimationFrame(() => {
           if (!document.hidden) e.target.dataset.paused = '0';
         });
       });
-      video.addEventListener('pause', (e) => {
+      video.addEventListener('pause', e => {
         window.requestAnimationFrame(() => {
           if (!document.hidden) e.target.dataset.paused = '1';
         });
@@ -358,28 +335,23 @@
     const anchor = video.closest('a');
     if (anchor) anchor.title = 'WebM | ' + anchor.title;
 
-    checkAudioTrack(video)
-      .then(createToggleButton)
-      .then((obj) => {
-        const {video, audio} = obj;
-        if (audio) {
-          video.addEventListener('volumechange', volumechangeHandler);
-          if (AUTOMUTE) io.observe(video);
-        } else {
-          // Attempting to run play() on a video without an audio track will still throw exception on Chrome
-          // due to its autoplay policy, if the 'muted' property was set to false.
-          video.muted = true;
-        }
-        if ((isMainImage && !document.hidden) || video.paused && !document.hidden) {
-          video.play().catch(function () {
-            // Fallback for Chrome's autoplay policy preventing video from playing
-            console.log('Derpibooru WebM Volume Toggle: Unable to play video unmuted, playing it muted instead.');
-            toggleVolume(video);
-            video.play();
-          });
-        }
+    if (await hasAudio(video)) {
+      createToggleButton(video);
+      video.addEventListener('volumechange', volumechangeHandler);
+      if (AUTOMUTE) io.observe(video);
+    } else {
+      // Attempting to run play() on a video without an audio track will still throw exception on Chrome
+      // due to its autoplay policy, if the 'muted' property was set to false.
+      video.muted = true;
+    }
+    if ((isMainImage && !document.hidden) || video.paused && !document.hidden) {
+      video.play().catch(() => {
+        // Fallback for Chrome's autoplay policy preventing video from playing
+        console.log('Derpibooru WebM Volume Toggle: Unable to play video unmuted, playing it muted instead.');
+        toggleVolume(video);
+        video.play();
       });
-
+    }
   });
 
   if (PAUSE_IN_BACKGROUND) {
