@@ -349,7 +349,7 @@
       // due to its autoplay policy, if the 'muted' property was set to false.
       video.muted = true;
     }
-    if ((isMainImage && !document.hidden) || video.paused && !document.hidden) {
+    if ((isMainImage || video.paused) && !document.hidden) {
       video.play().catch(() => {
         // Fallback for Chrome's autoplay policy preventing video from playing
         console.log('Derpibooru WebM Volume Toggle: Unable to play video unmuted, playing it muted instead.');
