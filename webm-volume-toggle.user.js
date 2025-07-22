@@ -141,6 +141,7 @@
 
   function hasAudio(video) {
     return new Promise(resolve => {
+      /* eslint-disable @stylistic/operator-linebreak */
       function listener() {
         /*
          * Audio track detection method for:
@@ -153,6 +154,7 @@
           video.mozHasAudio ||
           video.audioTracks?.length > 0);
       }
+      /* eslint-enable @stylistic/operator-linebreak */
 
       if (video.readyState >= video.HAVE_CURRENT_DATA) {
         listener();
